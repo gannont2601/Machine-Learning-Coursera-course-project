@@ -1,0 +1,76 @@
+---
+title: "Machine Learning Course Project"
+author: "Tom Gannon"
+date: "December 10, 2016"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Machine Learning Course project
+
+#Background
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+#Data
+
+The training data for this project are available here:
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+The test data are available here:
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+
+The data for this project come from this source: http://groupware.les.inf.puc-rio.br/har. If you use the document you create for this class for any purpose please cite them as they have been very generous in allowing their data to be used for this kind of assignment.
+
+The goal of below analysis is to predict the manner in which they did the exercise. This is the "classe" variable in the training set.
+
+#Load libraries
+```{r }
+library('caret')
+```
+
+# Load data
+-original data locations stated above
+-turn blanks into NA for cleaning stage
+```{r }
+training <- read.csv("pml-training.csv", header = TRUE, na.strings = c("","NA"))
+testing <- read.csv("pml-testing.csv", header = TRUE)
+```
+
+#clean data
+-remove summary observations from training data
+-remove columns with NA in more than 75% of observations in training
+-remove same columns in testing
+```{r }
+clean_training <- training[training$new_window == 'no', ]
+clean_training <- training[lapply(training, function(training) sum(is.na(training)) / length(training) ) < 0.75 ]
+clean_testing <- testing[lapply( training, function(training) sum(is.na(training)) / length(training) ) < 0.75 ]
+```
+
+
+#Run Model
+-Chose random forest model and it returned 99% accuracy so didn't pursue other models;
+-correctly predicted 20 out of 20 test dataset observations
+-Processing times of random forest model were very long so researched model tuning methods
+to reduce complexity - train control 
+```{r }
+rf <- train(classe ~ ., clean_training, method = 'rf', 
+            trainControl = trainControl(method = 'cv', number = 3),
+            rf.tunegrid = data.frame(mtry = c(4)))
+
+rf
+```
+
+#Predict using test set
+-correctly predicted 20 out of 20 test dataset observations
+```{r predict}
+rf.predict <- predict(rf, clean_testing)
+```
